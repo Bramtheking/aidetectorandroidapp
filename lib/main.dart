@@ -9,26 +9,44 @@ void main() {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  ThemeMode _themeMode = ThemeMode.light;
+
+  void _toggleTheme() {
+    setState(() {
+      _themeMode = _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'AI Text Detector',
       theme: ThemeData(
-        primarySwatch: Colors.green,
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
-        useMaterial3: true,
+        primarySwatch: Colors.teal,
+        brightness: Brightness.light,
       ),
+      darkTheme: ThemeData(
+        primarySwatch: Colors.teal,
+        brightness: Brightness.dark,
+      ),
+      themeMode: _themeMode,
       debugShowCheckedModeBanner: false,
-      home: const HomePage(),
+      home: HomePage(toggleTheme: _toggleTheme),
     );
   }
 }
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final VoidCallback toggleTheme;
+  const HomePage({super.key, required this.toggleTheme});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -38,50 +56,47 @@ class _HomePageState extends State<HomePage> {
   final TextEditingController _controller = TextEditingController();
   bool _isLoading = false;
   Map<String, double>? _result;
-  String _selectedTheme = "Ocean Green";
 
   Future<void> _checkText() async {
-  if (_controller.text.isEmpty) return;
-  setState(() {
-    _isLoading = true;
-    _result = null;
-  });
+    if (_controller.text.isEmpty) return;
+    setState(() {
+      _isLoading = true;
+      _result = null;
+    });
 
-  try {
-    final response = await http.post(
-      Uri.parse('https://aitextdetectormodel.onrender.com/predict'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'text': _controller.text}),
-    );
+    try {
+      final response = await http.post(
+        Uri.parse('https://aitextdetectormodel.onrender.com/predict'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'text': _controller.text}),
+      );
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body) as Map<String, dynamic>;
-      setState(() {
-        _result = {
-          'AI_probability': ((data['AI_probability'] as num).toDouble() * 100),
-          'Human_probability': ((data['Human_probability'] as num).toDouble() * 100),
-        };
-      });
-
-      // Set a timer to clear the result after 4 seconds
-      Future.delayed(const Duration(seconds: 4), () {
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body) as Map<String, dynamic>;
         setState(() {
-          _result = null;
+          _result = {
+            'AI_probability': ((data['AI_probability'] as num).toDouble() * 100),
+            'Human_probability': ((data['Human_probability'] as num).toDouble() * 100),
+          };
         });
-      });
-    } else {
-      throw Exception('Failed with status code: ${response.statusCode}.');
-    }
-  } catch (error) {
-    developer.log("Error occurred: $error", name: 'API Error', error: error);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error: $error. Please try again.')),
-    );
-  } finally {
-    setState(() => _isLoading = false);
-  }
-}
 
+        Future.delayed(const Duration(seconds: 4), () {
+          setState(() {
+            _result = null;
+          });
+        });
+      } else {
+        throw Exception('Failed with status code: ${response.statusCode}.');
+      }
+    } catch (error) {
+      developer.log("Error occurred: $error", name: 'API Error', error: error);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $error. Please try again.')),
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -90,9 +105,9 @@ class _HomePageState extends State<HomePage> {
         title: const Text('AI Text Detector'),
         actions: [
           IconButton(
-            tooltip: 'Settings',
-            icon: const Icon(Icons.settings),
-            onPressed: () => _showSettings(),
+            tooltip: 'Toggle Theme',
+            icon: const Icon(Icons.brightness_6),
+            onPressed: widget.toggleTheme,
           ),
         ],
         centerTitle: true,
@@ -117,7 +132,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // Introduces the app, features, and model description
   Widget _buildIntroCard() {
     return Card(
       color: Colors.green[50],
@@ -143,7 +157,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // Text input with enhanced UI
   Widget _buildTextInput() {
     return Card(
       color: Colors.white,
@@ -164,7 +177,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // Button to trigger text analysis
   Widget _buildCheckButton() {
     return Center(
       child: ElevatedButton(
@@ -180,7 +192,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // Result display in a floating card
   Widget _buildFloatingResultCard() {
     return Center(
       child: Card(
@@ -212,7 +223,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // Animated progress bar while loading
   Widget _buildAnimatedProgressBar() {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
@@ -224,7 +234,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // Floating buttons for quick access to portfolio
   Widget _buildFloatingActionButtons() {
     return Column(
       mainAxisAlignment: MainAxisAlignment.end,
@@ -232,67 +241,36 @@ class _HomePageState extends State<HomePage> {
         _buildSocialButton(
           icon: Icons.web,
           tooltip: 'Portfolio',
-          onPressed: () => _openUrl('https://bramwelagina.my.canva.site/myportofolio'),
+          url: 'https://bramwelagina.my.canva.site/myportofolio',
         ),
         const SizedBox(height: 10),
         _buildSocialButton(
           icon: FontAwesomeIcons.github,
           tooltip: 'GitHub',
-          onPressed: () => _openUrl('https://github.com/Bramtheking'),
+          url: 'https://github.com/Bramtheking',
         ),
         const SizedBox(height: 10),
         _buildSocialButton(
           icon: Icons.linked_camera,
           tooltip: 'LinkedIn',
-          onPressed: () => _openUrl('https://www.linkedin.com/in/bramwel-agina-a88678266/'),
+          url: 'https://www.linkedin.com/in/bramwel-agina-a88678266/',
         ),
       ],
     );
   }
 
-  // Helper function to create social buttons
   FloatingActionButton _buildSocialButton(
-      {required IconData icon, required String tooltip, required void Function() onPressed}) {
+      {required IconData icon, required String tooltip, required String url}) {
     return FloatingActionButton(
-      onPressed: onPressed,
+      onPressed: () async {
+        if (await canLaunchUrl(Uri.parse(url))) {
+          await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+        } else {
+          throw 'Could not launch $url';
+        }
+      },
       tooltip: tooltip,
       child: Icon(icon),
     );
-  }
-
-  // Function to show settings
-  void _showSettings() {
-    showModalBottomSheet(
-      context: context,
-      builder: (_) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ListTile(
-            title: const Text('Select Theme'),
-            trailing: DropdownButton<String>(
-              value: _selectedTheme,
-              items: ['Ocean Green', 'Coral Blue'].map((String theme) {
-                return DropdownMenuItem(value: theme, child: Text(theme));
-              }).toList(),
-              onChanged: (String? value) {
-                setState(() {
-                  _selectedTheme = value ?? _selectedTheme;
-                });
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Opens URL
-  void _openUrl(String url) async {
-    final Uri uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
-      throw 'Could not launch $url';
-    }
   }
 }
