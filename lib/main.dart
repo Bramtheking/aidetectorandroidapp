@@ -259,18 +259,20 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  FloatingActionButton _buildSocialButton(
-      {required IconData icon, required String tooltip, required String url}) {
-    return FloatingActionButton(
-      onPressed: () async {
-        if (await canLaunchUrl(Uri.parse(url))) {
-          await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-        } else {
-          throw 'Could not launch $url';
-        }
-      },
-      tooltip: tooltip,
-      child: Icon(icon),
-    );
-  }
+ FloatingActionButton _buildSocialButton(
+    {required IconData icon, required String tooltip, required String url}) {
+  return FloatingActionButton(
+    onPressed: () async {
+      final Uri uri = Uri.parse(url);
+      if (await canLaunchUrl(uri)) {
+        // Set the launch mode to inAppWebView for more reliable link handling
+        await launchUrl(uri, mode: LaunchMode.inAppWebView);
+      } else {
+        throw 'Could not launch $url';
+      }
+    },
+    tooltip: tooltip,
+    child: Icon(icon),
+  );
+}
 }
