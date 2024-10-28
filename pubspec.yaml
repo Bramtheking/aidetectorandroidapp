@@ -1,0 +1,37 @@
+name: aidetectorapp
+description: "A new Flutter project."
+
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.5.3
+
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^0.13.4
+  url_launcher: ^6.0.20
+  font_awesome_flutter: ^10.2.1
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.9.2  # Added here for icon management
+
+flutter:
+  uses-material-design: true
+
+  # Asset configuration if you need custom assets
+  # assets:
+  #   - images/a_dot_burr.jpeg
+  #   - images/a_dot_ham.jpeg
+
+# Icon configuration section
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/icon.png"  # Path to your icon image
